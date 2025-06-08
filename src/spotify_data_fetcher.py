@@ -40,14 +40,9 @@ def fetch_recently_played():
         'track_name': track_name,
         'artist_name': artist_name,
         'played_at': played_at
+        #this is UTC timezone (7h ahead of PST after Spring Forward)
     }
-    return track_data
-def main():
-    print("Fetching recently played tracks...")
-    track_data = fetch_recently_played()
     fetcher = DeezerDataFetcher()
     additional_data = fetcher.process_track(track_data['artist_name'], track_data['track_name'])
     track_data.update(additional_data)
-    print(track_data)
-if __name__ == "__main__":
-    main() 
+    return track_data
