@@ -80,7 +80,9 @@ class MoodAnalyzer:
             Temperature: {weather_data['temperature']}°C, Weather Type: {weather_data['type_of_weather']}
             Music: {music_data['track_name']} by {music_data['artist_name']} (BPM: {music_data['bpm']})
             
-            Consider how these factors might influence someone's mood. Provide your single emotion prediction for the user's mental state: only use happy, angry, sad, or energized."""
+            Keep in mind that the user is in PST timezone (7h ahead of UTC). So adjust the time of day accordingly
+            Consider how these factors might influence someone's mood. ONLY Provide your single emotion prediction 
+            for the user's mental state: only use happy, angry, sad, or energized. No other response."""
 
             client = OpenAI(api_key=self.openrouter_api_key, base_url=self.openrouter_url)
             response = client.chat.completions.create(
