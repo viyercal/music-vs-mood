@@ -95,3 +95,25 @@ class MoodAnalyzer:
         except Exception as e:
             logger.error(f"Error predicting mood with LLM: {e}")
             return "Unable to predict mood"
+
+    def analyze_mood_history(self, tracks_data: Dict) -> Dict:
+        """Analyze mood for multiple tracks based on music and weather data"""
+        analyzed_tracks = {}
+        
+        for track_number, track_info in tracks_data.items():
+            weather_data = self.weather_fetcher.get_weather_data(track_info['played_at'])
+            if not weather_data:
+                continue
+            mood_prediction = self.predict_mood_with_llm(track_info, weather_data, track_info['played_at'])
+
+            analyzed_tracks[track_number] = {
+                'track_name': track_info['track_name'],
+                'artist_name': track_info['artist_name'],
+                'played_at': track_info['played_at'],
+                'bpm': track_info['bpm'],
+                'temperature': weather_data['temperature'],
+                'type_of_weather': weather_data['type_of_weather'],
+                'predicted_mood': mood_prediction
+            }
+            
+        return analyzed_tracks

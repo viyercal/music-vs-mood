@@ -5,6 +5,7 @@ import time
 import os
 from dotenv import load_dotenv
 import logging
+from typing import Dict
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -21,7 +22,6 @@ class DeezerDataFetcher:
     def search_track(self, artist, title):
         """Search for a track on Deezer and return its ID and metadata"""
         try:
-            # Format the search query
             query = f"{artist} {title}"
             encoded_query = requests.utils.quote(query)
 
@@ -35,8 +35,6 @@ class DeezerDataFetcher:
                     'id': track['id'],
                     'title': track['title'],
                     'artist': track['artist']['name'],
-                    'duration': track['duration'],
-                    'preview': track['preview']
                 }
             logger.warning(f"No results found for: {query}")
             return None
@@ -56,10 +54,8 @@ class DeezerDataFetcher:
             data = response.json()
             if not data:
                 return None
-                
-            # Extract and normalize features
             features = {
-                'bpm': data.get('bpm', 0),
+                'bpm': data.get('bpm', "unknown"),
             }
             return features
             
@@ -70,20 +66,24 @@ class DeezerDataFetcher:
             logger.error(f"Unexpected error getting Deezer features: {e}")
             return None
 
-    def process_track(self, artist, title, timestamp=None):
-        """Process a single track and return its data"""
-        # Search for the track
-        track_info = self.search_track(artist, title)
-        if not track_info:
-            return None
-
-        # Get features
-        features = self.get_track_features(track_info['id'])
-        if not features:
-            return None
-
-        # Combine all data
-        track_data = {
-            **features  # Include all audio features
-        }
-        return track_data
+    def process_track(self, track_data: Dict) -> Dict:
+        """Process multiple tracks and return their data"""
+        processed_tracks = {}
+        
+        for track_number, track_info in track_data.items():
+            track_metadata = self.search_track(track_info['artist_name'], track_info['track_name'])
+            if not track_metadata:
+                continue
+            features = self.get_track_features(track_metadata['id'])
+            if not features:
+                continue
+            processed_tracks[track_number] = {
+                'track_name': track_info['track_name'],
+                'artist_name': track_info['artist_name'],
+                'played_at': track_info['played_at'],
+                'bpm': features.get('bpm', "unknown")
+            }
+            # Respect rate limit
+            time.sleep(self.rate_limit_delay)
+            
+        return processed_tracks
