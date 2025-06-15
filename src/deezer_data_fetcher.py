@@ -7,11 +7,9 @@ from dotenv import load_dotenv
 import logging
 from typing import Dict
 
-# Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# Load environment variables
 load_dotenv()
 
 class DeezerDataFetcher:
@@ -83,7 +81,7 @@ class DeezerDataFetcher:
                 'played_at': track_info['played_at'],
                 'bpm': features.get('bpm', "unknown")
             }
-            # Respect rate limit
+            # Respect rate limit of Deezer API
             time.sleep(self.rate_limit_delay)
             
         return processed_tracks

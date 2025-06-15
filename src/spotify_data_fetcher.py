@@ -8,17 +8,14 @@ from dotenv import load_dotenv
 
 from deezer_data_fetcher import DeezerDataFetcher
 
-# Load environment variables
 load_dotenv()
 
-# Spotify API credentials from environment variables
 CLIENT_ID = os.getenv('SPOTIFY_CLIENT_ID')
 CLIENT_SECRET = os.getenv('SPOTIFY_CLIENT_SECRET')
 
 if not CLIENT_ID or not CLIENT_SECRET:
     raise ValueError("Please set SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET environment variables")
 
-# Initialize Spotify client with necessary scopes
 sp = spotipy.Spotify(auth_manager=SpotifyOAuth(
     client_id=CLIENT_ID,
     client_secret=CLIENT_SECRET,
@@ -31,7 +28,7 @@ def fetch_recently_played():
     """Fetch recently played tracks with timestamps"""
     recently_played = sp.current_user_recently_played(limit=5)
     track_data = {}
-    counter = 1  # (most recent)
+    counter = 1 
     for item in recently_played['items']:
         track_name = item['track']['name']  
         artist_name = item['track']['artists'][0]['name']
