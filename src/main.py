@@ -1,54 +1,64 @@
 import pandas as pd
 from spotify_data_fetcher import fetch_recently_played
-from mood_analyzer import MoodAnalyzer, WeatherDataFetcher
+from mood_analyzer import MoodAnalyzer
 import logging
 from pathlib import Path
+from datetime import datetime
+import pytz
+import os
+from dotenv import load_dotenv
 
-# Set up logging
+load_dotenv()
+
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-def ensure_data_directory():
-    """Ensure the data directory exists"""
-    data_dir = Path('../data')
-    data_dir.mkdir(parents=True, exist_ok=True)
-    return data_dir
+def convert_to_local_time(utc_time_str: str) -> str:
+    """Convert UTC timestamp to local timezone"""
+    try:
+        utc_time = datetime.fromisoformat(utc_time_str.replace('Z', '+00:00'))
+        # Get user's timezone from env or default to system timezone
+        user_timezone = os.getenv('TIMEZONE', 'America/Los_Angeles')
+        local_tz = pytz.timezone(user_timezone)
+        local_time = utc_time.astimezone(local_tz)
+        return local_time.strftime('%I:%M %p')
+    except Exception as e:
+        logger.error(f"Error converting time: {e}")
+        return utc_time_str  # Return orig. string if conversion fails
 
 def main():
     try:
-        # Initialize data directory
-        data_dir = ensure_data_directory()
-        
-        # Step 1: Collect Spotify data
-        logger.info("Starting Spotify data collection...")
+        logger.info("Starting Spotify x Deezer data collection...")
         music_info = fetch_recently_played()
-        #print(music_info)
         
-        # Step 2: Analyze mood based on music and weather
-        logger.info("Starting mood analysis...")
-        weather_fetcher = WeatherDataFetcher()
-        weather_data = weather_fetcher.get_weather_data(music_info['played_at'])
-        #print(weather_data)
+        if not music_info:
+            logger.error("No music data collected")
+            return
+            
+        logger.info("Analyzing mood based on music and weather data...")
         mood_analyzer = MoodAnalyzer()
-        final_data = mood_analyzer.predict_mood_with_llm(music_info, weather_data, music_info['played_at'])
-        all_data = music_info | weather_data
-        prediction = final_data
-        all_data['predicted_mood'] = prediction
-        print(all_data)
-        '''
-        # Print sample of results
-        print("\nSample of Results:")
-        print(f"Total entries analyzed: {len(final_data)}")
-        print("\nFirst 3 entries:")
-        for _, row in final_data.head(3).iterrows():
-            print(f"\nTime: {row['timestamp']}")
-            print(f"Track: {row['track_name']} by {row['artist_name']}")
-            print(f"Temperature: {row['temperature']}°C")
-            print(f"Predicted Mood: {row['predicted_mood']}")'''
+        analyzed_tracks = mood_analyzer.analyze_mood_history(music_info)
+
+        #output: proj this into ui? future improvement
+        print("\n=== Music Mood Analysis Results ===")
+        print(f"Overall Predicted Mood: {analyzed_tracks[1]['predicted_mood']}")
+        print("\nTrack Details:")
+        print("-" * 80)
+        
+        for track_num, track_data in analyzed_tracks.items():
+            # Convert UTC timestamp to local time
+            local_time = convert_to_local_time(track_data['played_at'])
+            
+            print(f"\nTrack {track_num}:")
+            print(f"Time: {local_time}")
+            print(f"Track: {track_data['track_name']} by {track_data['artist_name']}")
+            print(f"BPM: {track_data['bpm']}")
+            print(f"Temperature: {track_data['temperature']}°C")
+            print(f"Weather: {track_data['type_of_weather']}")
+            print("-" * 40)
             
     except Exception as e:
-        logger.error(f"Error in main process: {e}")
-        raise
+        logger.error(f"Error in main: {e}")
 
 if __name__ == "__main__":
     main() 

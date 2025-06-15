@@ -8,17 +8,14 @@ from dotenv import load_dotenv
 
 from deezer_data_fetcher import DeezerDataFetcher
 
-# Load environment variables
 load_dotenv()
 
-# Spotify API credentials from environment variables
 CLIENT_ID = os.getenv('SPOTIFY_CLIENT_ID')
 CLIENT_SECRET = os.getenv('SPOTIFY_CLIENT_SECRET')
 
 if not CLIENT_ID or not CLIENT_SECRET:
     raise ValueError("Please set SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET environment variables")
 
-# Initialize Spotify client with necessary scopes
 sp = spotipy.Spotify(auth_manager=SpotifyOAuth(
     client_id=CLIENT_ID,
     client_secret=CLIENT_SECRET,
@@ -29,20 +26,17 @@ sp = spotipy.Spotify(auth_manager=SpotifyOAuth(
 
 def fetch_recently_played():
     """Fetch recently played tracks with timestamps"""
-    recently_played = sp.current_user_recently_played(limit=1)
+    recently_played = sp.current_user_recently_played(limit=5)
     track_data = {}
+    counter = 1 
     for item in recently_played['items']:
         track_name = item['track']['name']  
         artist_name = item['track']['artists'][0]['name']
         played_at = item['played_at']
-        time.sleep(0.1)
-    track_data = {
-        'track_name': track_name,
-        'artist_name': artist_name,
-        'played_at': played_at
+        track_data[counter] = {'track_name': track_name, 'artist_name': artist_name, 'played_at': played_at}
         #this is UTC timezone (7h ahead of PST after Spring Forward)
-    }
+        counter += 1
+        time.sleep(0.1)
     fetcher = DeezerDataFetcher()
-    additional_data = fetcher.process_track(track_data['artist_name'], track_data['track_name'])
-    track_data.update(additional_data)
-    return track_data
+    processed_tracks = fetcher.process_track(track_data)
+    return processed_tracks
