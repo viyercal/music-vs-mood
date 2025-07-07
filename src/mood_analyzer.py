@@ -7,6 +7,7 @@ import logging
 from typing import Dict, List, Optional
 import json
 from openai import OpenAI
+
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
@@ -26,13 +27,11 @@ class WeatherDataFetcher:
         self.base_url = "https://api.openweathermap.org/data/3.0"
         logger.info("WeatherDataFetcher initialized with API key and coordinates")
         #my city in .env
-    def get_weather_data(self, timestamp: str) -> Optional[Dict]:
+
+    def get_weather_data(self, timestamp: datetime) -> Optional[Dict]:
         """Get weather data for a specific location and time"""
         try:
-            # Parse ISO 8601 timestamp to datetime
-            dt = datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
-            # Convert to Unix timestamp (seconds since epoch)
-            unix_timestamp = int(dt.timestamp())
+            unix_timestamp = int(timestamp.timestamp())
             url = f"{self.base_url}/onecall/timemachine"
             params = {
                 'lat': self.lat,
@@ -67,17 +66,19 @@ class MoodAnalyzer:
             track_summary = []
             weather_summary = []
             time_summary = []
+            
             for track_info in tracks_data.values():
                 weather_data = self.weather_fetcher.get_weather_data(track_info['played_at'])
                 if not weather_data:
                     continue
-                dt = datetime.fromisoformat(track_info['played_at'].replace('Z', '+00:00'))
-                hour = dt.hour
+                    
+                hour = track_info["played_at"].hour
                 time_of_day = "morning" if 5 <= hour < 12 else "afternoon" if 12 <= hour < 17 else "evening" if 17 <= hour < 22 else "night"
  
-                track_summary.append(f"{track_info['track_name']} by {track_info['artist_name']} (BPM: {track_info['bpm']})")
+                track_summary.append(f"{track_info['track_name']} by {track_info['artist_name']}")
                 weather_summary.append(f"{weather_data['temperature']}°C, {weather_data['type_of_weather']}")
-                time_summary.append(f"{time_of_day} ({dt.strftime('%I:%M %p')})")
+                time_summary.append(f"{time_of_day} ({track_info['played_at'].strftime('%I:%M %p')})")
+                
             prompt = f"""Based on the following information about multiple tracks played in sequence, describe the likely overall mood or emotional state:
             
             Time Periods:
@@ -89,7 +90,6 @@ class MoodAnalyzer:
             Music Played:
             {', '.join(track_summary)}
             
-            Keep in mind that the user is in PST timezone (7h ahead of UTC). So adjust the time of day accordingly.
             Consider how these factors together might influence someone's mood. ONLY Provide your single emotion prediction 
             for the user's mental state: only use happy, angry, sad, or energized. No other response."""
 
@@ -119,8 +119,8 @@ class MoodAnalyzer:
             analyzed_tracks[track_number] = {
                 'track_name': track_info['track_name'],
                 'artist_name': track_info['artist_name'],
-                'played_at': track_info['played_at'],
-                'bpm': track_info['bpm'],
+                'played_at': track_info["played_at"].strftime('%I:%M %p'),  # Format for display
+                #'bpm': track_info['bpm'],
                 'temperature': weather_data['temperature'],
                 'type_of_weather': weather_data['type_of_weather'],
                 'predicted_mood': overall_mood 

@@ -1,4 +1,5 @@
-import requests
+#Commented out because Deezer API is not working properly in fetching bpm data
+'''import requests
 import pandas as pd
 from datetime import datetime
 import time
@@ -85,3 +86,4 @@ class DeezerDataFetcher:
             time.sleep(self.rate_limit_delay)
             
         return processed_tracks
+'''
