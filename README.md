@@ -4,6 +4,9 @@ A repository containing code that predicts a user's mood from their Spotify list
 As an overview of the underlying code: a user's recently played set of songs from Spotify is pulled via Spotify's web API. The timestamp corresponding to when the music was played is used with location data to pull weather information, and this is combined into one payload to send to a lightweight LLM (i.e. Gemini 2.5 Flash) which predicts the user's mood given this information. 
 
 
-Sample Output for past 5 played tracks:
+Sample Output for past 5 played tracks (Note slight weather differences are attributable to weather fluctuations over time as well as OpenWeatherAPI weather instability):
 
-![image](https://github.com/user-attachments/assets/b65eab97-70f3-487f-a9ac-43b131787401)
+<img width="811" height="631" alt="image" src="https://github.com/user-attachments/assets/f97fa23a-da95-4f76-8c97-caf0d8fc4345" />
+
+
+
