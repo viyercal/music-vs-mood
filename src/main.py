@@ -20,15 +20,25 @@ def main():
         
         if not music_info:
             logger.error("No music data collected")
-            return
-            
+            return  
         logger.info("Analyzing mood based on music and weather data...")
         mood_analyzer = MoodAnalyzer()
         analyzed_tracks = mood_analyzer.analyze_mood_history(music_info)
         
+        if not analyzed_tracks:
+            logger.error("No tracks could be analyzed")
+            return
+        
         #output: proj this into ui? future improvement
         print("\n=== Music Mood Analysis Results ===")
-        print(f"Overall Predicted Mood: {analyzed_tracks[1]['predicted_mood']}")
+        
+        # Find the first available track for overall mood
+        first_track_key = next(iter(analyzed_tracks.keys()), None)
+        if first_track_key:
+            print(f"Overall Predicted Mood: {analyzed_tracks[first_track_key]['predicted_mood']}")
+        else:
+            print("Overall Predicted Mood: Unable to determine")
+        
         print("\nTrack Details:")
         print("-" * 80)
         
@@ -37,7 +47,7 @@ def main():
             print(f"Time: {track_data['played_at']}")
             print(f"Track: {track_data['track_name']} by {track_data['artist_name']}")
             #print(f"BPM: {track_data['bpm']}")
-            print(f"Temperature: {track_data['temperature']}°C")
+            print(f"Temperature: {track_data['temperature']}°F")
             print(f"Weather: {track_data['type_of_weather']}")
             print("-" * 40)
             
